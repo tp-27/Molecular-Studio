@@ -1,0 +1,63 @@
+.nav {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 15px;
+}
+
+.nav-options {
+    display: flex;
+    width: 300px;
+    justify-content: space-evenly;
+    align-self: flex-end;
+    gap: 20px;
+    padding-right: 20px;
+}
+
+.title {
+    padding-left: 25px;
+    font-size: 30px;
+    font-weight: 600;
+}
+
+.nav-options a {
+    font-size: 20px;
+  
+}
+
+a {
+    text-decoration: none;
+    color: black;
+}
+
+.middle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 500px;
+    width: auto;
+    /* border: solid 2px red; */
+}
+
+.file-upload {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: 500px;
+    width: 70%;
+    margin-top: 100px;
+    gap: 60px;
+}
+
+
+
+.file-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 25px;
+    /* border: solid 2px red; */
+}
+
+

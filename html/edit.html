@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width", intitial-scale="1.0">
+        <title>MyMolecules</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+        <link rel="stylesheet" href="../edit.css">
+    </head>
+    <body>
+        <div class="nav">
+            <div class="title"><a href="index.html">MyMolecules</a></div>
+            <div class="nav-options">
+              <a href="upload.html">Upload</a>
+              <a href="edit.html">Edit</a>
+              <a href="select.html">Select</a>
+            </div>
+        </div>
+
+        <div class="middle">
+            <div class="display-box">
+                <div class="inside-display-box">
+                    <div class="edit-buttons">
+                        <div class="add-ops">
+                            <button type="submit" id="add">Add</button>
+                        </div>
+                        <div class="element-list"></div>
+
+                    </div>
+                    <div class="svg-img"></div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            let numElements = 0;
+            const elementCodes = ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na",
+            "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", 
+            "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", 
+            "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", 
+            "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", 
+            "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", 
+            "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th", 
+            "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", 
+            "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Nh", "Fl", "Mc", "Lv", "Ts", "Og"];
+
+            window.onload = function () {
+                $.ajax({
+                    url: "/elements",
+                    method: 'GET',
+                    success: function(data, status) {
+                        elements = JSON.parse(data);
+                        console.log(elements);
+                        
+                        let html = `
+                            <table class="element-table" style="width=80%;display:table-header-group;">
+                                <tr>
+                                    <th>Number</th>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Colours</th>
+                                    <th>Radius</th>
+                                </tr>
+                            </table>
+                        `;
+
+                        $('.element-list').append($(html));
+                        $('table, tr, th').css({
+                            "border" : "1px solid black",
+                            "border-collapse" : "collapse",
+                            "padding" : "10px", 
+                            "background-colour" : "grey;"
+                        });
+                        
+                        numElements = Object.keys(elements).length;
+                        for (let i = 0; i < numElements; i++) {
+                            html = `
+                                <tr>
+                                    <td class="entry-num">${elements[i]['number']}</td>
+                                    <td class="entry-code">${elements[i]['code']}</td>
+                                    <td class="entry-name">${elements[i]['name']}</td>
+                                    <td class="entry-colours">
+                                        <div>
+                                            <div style="height: 20px;width:20px;background-color:#${elements[i]['col1']};border:1px black solid"></div>
+                                            <div style="height: 20px;width:20px;background-color:#${elements[i]['col2']};border:1px black solid"></div>
+                                            <div style="height: 20px;width:20px;background-color:#${elements[i]['col3']};border:1px black solid;margin-right:20px"></div>
+                                        </div>
+                                    </td>
+                                    <td class="entry-radius">${elements[i]['radius']}</td>
+                                    <td class="entry-delete"><button type="submit" id="delete-${i}" style="margin-left:20px;background-color:red;text-decoration:none;">X</button></td>
+                                </tr>
+                            `            
+                            $('.element-table').append($(html));
+                        }
+
+                        addDeleteEvnt(numElements);
+
+                        $('#add').click( function () {
+                            addAddBtn(numElements);
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error registering user:', error);
+                    }
+                });
+            }
+
+            function addDeleteEvnt(numElements) {
+                for (let i = 0; i < numElements; i++) {
+                    let query = "#delete-" + i; 
+                    $(query).click(function() {
+                        var siblings = $(query).parent().siblings();
+                        var code = $(siblings[1]).html();
+
+                        $.post("/delete-element",
+                        {
+                            element: code,
+                        },
+                        function(data, status) 
+                        {
+                            console.log(data + "Status: " + status);
+                            var table_entry = $(query).parent().parent().remove(); // update elements table
+                        });
+                    });
+                }
+            }
+
+            function addAddBtn(numElements) {
+                let html = `
+                    <form id="add-edit" enctype="multipart/form-data">
+                        <label for="ele-number">Number: </label>
+                        <input type="text" id="element_num" name="ele-num"/>
+                        <label for="ele-code">Code: </label>
+                        <select name="ele-code" id="element_code"></select>
+                        <label for="ele-name">Name: </label>
+                        <input type="text" id="element_name" name="ele-name"/><br>
+                        <br><label for="colours">Enter colours (#HEX)</label>
+                        <input type="text" id="colour1" name="colours"/>
+                        <input type="text" id="colour2"/>
+                        <input type="text" id="colour3"/>
+                        <br><label for="radius">Enter radius</label>
+                        <input type="text" name="radius" id="radius"/>
+                        <button type="button" id="add-ele">Add element</button>
+                    </form>
+                `
+                $(".element-list").append(html);
+                populateCodes();
+                $('#add-ele').click( function () {
+                    let num = $('#element_num').val();
+                    let name = $('#element_name').val();
+                    let code = $('#element_code').val();
+                    let col1 = $('#colour1').val();
+                    let col2 = $('#colour2').val();
+                    let col3 = $('#colour3').val();
+                    let radius = parseFloat($('#radius').val());
+                    console.log(radius);
+                    if (num && name && code && col1 && col2 && col3 && radius) { // check fields are populated
+                        if (cleanData(num, name, code, col1, col2, col3, radius)) {  // clean data
+                            $.post("/add-element",
+                            {
+                                number: num,
+                                name: name,
+                                code: code,
+                                colour1: col1, // comma separated string,
+                                colour2: col2,
+                                colour3: col3,
+                                radius: radius
+                            },
+                            function(data, status) {
+                                if (data != "") {
+                                    alert(data);
+                                } else {
+                                    // let numElements = $(".element-table").length;
+                                    // console.log($(".element-table"));
+                                    console.log(numElements);
+                                    let html = `
+                                        <tr>
+                                            <td class="entry-num">${num}</td>
+                                            <td class="entry-code">${code}</td>
+                                            <td class="entry-name">${name}</td>
+                                            <td class="entry-colours">
+                                                <div>
+                                                    <div style="height: 20px;width:20px;background-color:#${col1};border:1px black solid"></div>
+                                                    <div style="height: 20px;width:20px;background-color:#${col2};border:1px black solid"></div>
+                                                    <div style="height: 20px;width:20px;background-color:#${col3};border:1px black solid;margin-right:20px"></div>
+                                                </div>
+                                            </td>
+                                            <td class="entry-radius">${radius}</td>
+                                            <td class="entry-delete"><button type="submit" id="delete-${numElements}" style="margin-left:20px;background-color:red;text-decoration:none;">X</button></td>
+                                        </tr>
+                                    `            
+                                    $('.element-table').append($(html));
+                                    addDeleteEvnt(numElements + 1);
+                                    numElements++;
+                                }
+                            });
+                        } 
+                    } else {
+                        alert("Please populate all fields before adding.");
+                    }
+                });
+            }
+
+            function populateCodes() {
+                for (let i = 0; i < elementCodes.length; i++) {
+                    let html = `
+                        <option>${elementCodes[i]}</option>
+                    `;
+                    $("#element_code").append($(html));
+                }
+            }
+
+            function cleanData(num, name, code, col1, col2, col3, radius) {
+                let isClean = true;
+                
+                // FIX ME - CHECK IF INTEGER
+                if (parseInt(num)) {
+                    if (num < 1 || num > 118) { // invalid number
+                        alert("Invalid element number. Enter a number between 1-118.");
+                        isClean = false;
+                    }
+                } else {
+                    alert("Please enter a digit.");
+                    isClean = false;
+                }
+                
+
+                if (name.length > 32) { // invalid name
+                    alert("Please enter a name with up to 32 characters.");
+                    isClean = false;
+                }
+
+                if (col1.length > 6) { // invalid hex
+                    alert("Please enter valid HEX value in the range 000000 - FFFFFF");
+                    isClean = false;
+                } else {
+                    let temp = parseInt(col1, 16);
+                    if (temp < 0 || temp > parseInt("FFFFFF", 16)) { // check valid hex range
+                        alert("Please enter valid HEX value in the range 000000 - FFFFFF");
+                        isClean = false;
+                    }
+                }
+
+                if (col2.length > 6) { // invalid hex
+                    alert("Please enter valid hex value");
+                    isClean = false;
+                } else {
+                    let temp = parseInt(col2, 16);
+                    if (temp < 0 || temp > parseInt("FFFFFF", 16)) { // check valid hex range
+                        alert("Please enter valid hex value in the range #000000 - #FFFFFF");
+                        isClean = false;
+                    }
+                }
+
+                if (col3.length > 6) { // invalid hex
+                    alert("Please enter valid hex value");
+                    isClean = false;
+                } else {
+                    let temp = parseInt(col3, 16);
+                    if (temp < 0 || temp > parseInt("FFFFFF", 16)) { // check valid hex range
+                        alert("Please enter valid hex value in the range #000000 - #FFFFFF");
+                        isClean = false;
+                    }
+                }
+                
+                if (radius < 0) {
+                    alert("Please enter a valid radius");
+                    isClean = false;
+                }
+                return isClean;
+            }
+
+        </script>
+    </body>
+</html>

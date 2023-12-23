@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width", intitial-scale="1.0">
+        <title>MyMolecules</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+        <link rel="stylesheet" href="../upload.css">
+    </head>
+    <body>
+        <div class="nav">
+            <div class="title"><a href="index.html">MyMolecules</a></div>
+            <div class="nav-options">
+              <a href="upload.html">Upload</a>
+              <a href="edit.html">Edit</a>
+              <a href="select.html">Select</a>
+            </div>
+          </div>
+
+          <div class="middle">
+              <div class="file-upload">
+                <h1>File Upload</h1>
+                <div class="form">
+                    <input type="file" id="sdf_file" name="filename" onchange="readFile()">
+                    <label for="mol_name">Name this molecule</label>
+                    <input type="text" id="mol_name" name="molname"/>
+                    <button type="button" id="upload">Submit</button>
+                    <!-- <form id="file-form" enctype="multipart/form-data">  -->
+                        <!-- <input type="file" id="sdf_file" name="filename"/>
+                        <label for="mol_name">Name this molecule</label>
+                        <input type="text" id="mol_name" name="molname"/>
+                        <button type="button" id="upload">Submit</button>
+                    </form> -->
+                </div>
+              </div>
+          </div>
+
+          <script>
+            // var fileInput = document.getElementById('sdf_file');  
+            // fileInput.onchange = () => {
+            //    
+            // }
+            let contents;
+
+            function readFile() {
+                const [file] = document.querySelector('input[type=file]').files;
+                const reader = new FileReader();
+
+                reader.addEventListener("load", () => {
+                    const filename = file.name;
+                    const ext = filename.split('.').pop();
+                    console.log(ext);
+                    if (ext != "sdf") {
+                        alert("Invalid file type. Please upload an SDF file.");
+                        contents = "";
+                    } else {
+                        contents = reader.result;   
+                    }
+                }, false);
+
+                if (file) {
+                    reader.readAsText(file);
+                }
+            }
+
+            $("#upload").click(
+                function()
+                {   
+                    var molname = document.getElementById("mol_name").value;
+                    
+                    if (molname != "") {
+                        /* AJAX POST */
+                        $.post("/upload.html", 
+                            {
+                                molecule: molname, 
+                                sdf: contents,
+                            },
+                            function (data, status) {
+                                alert(data);
+                            }
+                        );
+                    } else {
+                        alert("Please enter a molecule name for the SDF file.");
+                    }
+                }   
+            );
+
+            function addDisplayButton() {
+                var btn = $('<input class="display-btn" type="button" value="display"/>');
+                btn.css({
+                    'height': '50px',
+                    'width': 'auto',
+                    'background-color': 'blue',
+                    'color': 'white',
+                    'font-size': '15px'
+                });
+                $(".file-upload").append(btn);
+                
+                btn.click(function () { // remove button add panel
+                    btn.remove();
+   
+                    /* AJAX POST */
+                    $.ajax({
+                        url: "/svg",
+                        method: 'GET',
+                        success: function(data, status) {
+                            var panel = $('<div class="display"></div>');
+                            panel.css({
+                            'height': '200px',
+                            'width': '200px',
+                            'border': '2px red solid'
+                            });
+                            $(".file-upload").append(panel);
+                            $(".display").html(data);
+
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error registering user:', error);
+                        }
+                    });
+
+                });
+                
+            }
+                
+          </script>
+    </body>
+</html>
+

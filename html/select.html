@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width", intitial-scale="1.0">
+        <title>MyMolecules</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+        <link rel="stylesheet" href="../select.css">
+    </head>
+    <body>
+        <div class="nav">
+            <div class="title"><a href="index.html">MyMolecules</a></div>
+            <div class="nav-options">
+              <a href="upload.html">Upload</a>
+              <a href="edit.html">Edit</a>
+              <a href="select.html">Select</a>
+            </div>
+          </div>
+          <div class="middle">
+              <div class="middle-nav">
+                <div class="select-box">
+                  <label for="molecules">Select a molecule:</label>
+                  <select name="molecules" id="molecules">
+                      <option>Select a molecule</option>
+                  </select> 
+                  <button type="submit" id="angle-btn">Change Angle</label>
+                </div>
+              </div>
+              <div class="svg-img"></div>
+          </div>
+
+          <script>
+            window.onload = function () {
+                $.get("/molecules",
+                  function(data, status) {
+                    molecules = JSON.parse(data);
+                    for (let i = 0; i < molecules.length; i++) {
+                      $('#molecules').append( $('<option value="' + molecules[i]['name'] + '">' + molecules[i]['name'] + '   [Atoms: ' + molecules[i]['atoms'] + ']' + '   [Bonds: ' + molecules[i]['bonds'] + ']'  + '</option>'));
+                    }
+                  }
+                );
+
+                $("#angle-btn").click( function() {
+                  if ($(".middle-nav").has($(".angle-box"))) {
+                    $(".angle-box").remove();
+                  }
+                  let html = `
+                    <div class="angle-box">
+                      <label for="angle">Change Angle</label>
+                      <select name="angle" id="angle">
+                          <option>Select an axis</option>
+                          <option>x</option>
+                          <option>y</option>
+                          <option>z</option>
+                      </select>
+                    </div>
+                  `
+                  $(".middle-nav").append($(html));
+                  
+                  $("#angle").change( function() {
+                    if ($(".middle-nav").has($(".degree-box"))) {
+                      $(".degree-box").remove();
+                    
+                    }
+                    let html = `
+                      <div class="degree-box">
+                        <label for="degrees">Enter angle in degrees: </label>
+                        <input type="text" id="degrees" name="degrees">
+                        <button type="submit" id="angle-change">Submit</button>
+                      </div>
+                    `
+                    $(".middle-nav").append($(html));
+
+                    $("#angle-change").click( function() {
+                      var deg = $("#degrees").val();
+                      var plane = $("#angle").val();
+                      var mol =  $("#molecules").find(":selected").text();
+                      
+                      console.log(deg);
+                      console.log(mol);
+                      console.log(plane);
+                      if (deg == "" || plane == "" || mol == "Select a molecule") {
+                        alert("Please complete all fields before submitting.");
+                      } else {
+                        if (deg >= 0 && deg <= 360) { // error check degrees 
+                          $.post("/change-angle",
+                            {
+                              degrees: deg,
+                              axis: plane,
+                              molecule: mol
+                            },
+                            function (data, status)
+                            {
+                              console.log(data);
+                              if ($(".svg-img").children().length > 0) {
+                                $(".svg-img").empty();
+                              } 
+
+                              $(".svg-img").append($(data));
+                              var svg = document.querySelector('svg');
+                              var width = parseFloat(svg.getAttributeNS(null, "width"));
+                              var height = parseFloat(svg.getAttributeNS(null, "height"));
+
+                              svg.setAttributeNS(null, "width", width * 0.5);
+                              svg.setAttributeNS(null, "height", height * 0.5);
+                              svg.setAttributeNS(null, "viewBox", "0 0 " + width + " " + height);
+                            }
+                          );
+                        } else {
+                          alert("Invalid degree. Please enter deg from 1-360.");
+                        }
+                      }
+                    });
+                  });
+              });
+            }
+
+            $("#molecules").change(function () {
+              $.post("/selected-mol",
+                {
+                  molecule:  $("#molecules").find(":selected").text(),
+                },
+                function (data, status) 
+                {
+                    if ($(".svg-img").children().length > 0) {
+                      $(".svg-img").empty();
+                    } 
+
+                    $(".svg-img").append($(data));
+                    var svg = document.querySelector('svg');
+                    var width = parseFloat(svg.getAttributeNS(null, "width"));
+                    var height = parseFloat(svg.getAttributeNS(null, "height"));
+
+                    svg.setAttributeNS(null, "width", width * 0.5);
+                    svg.setAttributeNS(null, "height", height * 0.5);
+                    svg.setAttributeNS(null, "viewBox", "0 0 " + width + " " + height);
+                }
+              );
+              // $.post("/selected-mol",
+              //   {
+              //     molecule: $("#molecules").find(":selected").text(),
+              //   },
+              //   function (data, status)
+              //   {
+                  
+              //   }
+              // )   
+            });
+
+          </script>
+    </body>
+</html>
+
+
+
